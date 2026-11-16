@@ -89,7 +89,8 @@ S.setdefault("log", [])
 def log(msg): S["log"] = (S["log"] + [{"ts": iso(), "msg": msg}])[-40:]
 def push_status(msg): return publish({"data/status.json": json.dumps(S, ensure_ascii=False, separators=(",", ":"))}, msg)
 
-S.update({"phase": "watching", "startedAt": iso(), "lastBeatAt": iso(), "checks": S.get("checks", 0) if S.get("phase") == "watching" else 0,
+started = S.get("startedAt") if (S.get("phase") == "watching" and S.get("startedAt")) else iso()   # keep the original start when resumed
+S.update({"phase": "watching", "startedAt": started, "lastBeatAt": iso(), "checks": S.get("checks", 0) if S.get("phase") == "watching" else 0,
           "note": "", "foundAt": None, "url": None})
 log("工作已啟動，開始每 10 秒檢查教務處頁面")
 print("START " + iso(), flush=True)
