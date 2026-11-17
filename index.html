@@ -81,9 +81,9 @@ h2.big{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.
 .tile{border-radius:22px;padding:16px 18px;min-width:0}
 .tile b{display:block;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em}
 .tile span{font-size:13px;font-weight:600;color:var(--muted)}
-.tile.ta{background:var(--lav)}.tile.tb{background:var(--mint)}.tile.tc{background:var(--peach)}
-.tile.cta{background:var(--black);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;text-decoration:none;text-align:center}
-.tile.cta span{color:rgba(255,255,255,.7)}.tile.cta b{font-size:18px}.tile.cta.off{opacity:.4;pointer-events:none}
+.tile.tbiz{background:#dbeafe}.tile.tio{background:var(--mint)}.tile.twait{background:var(--peach)}
+.tile.tgo{background:#fff1c9;border:0;font:inherit;text-align:left;width:100%;display:block;color:inherit}
+.tile.tgo.on{cursor:pointer;box-shadow:inset 0 0 0 2px #f2c94c}
 @media (max-width:820px){.tiles{grid-template-columns:1fr 1fr}.tile b{font-size:28px}}
 .sh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 20px 0}
 .sh h3{margin:0;font-size:17px;font-weight:800}
@@ -119,7 +119,7 @@ h2.big{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.
 .gtog b{font-size:15px;font-weight:800}.gtog .chev{width:14px;color:var(--muted);font-size:12px}
 .gtog:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
 .fline{font-size:13px;font-weight:700}
-.fx{padding:6px 0}.fx b{margin-right:10px;font-size:15px}.fl{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:4px;word-break:break-word}
+.fx{padding:8px 0 0}.fx b{margin-right:10px;font-size:15px}.fl{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:4px;word-break:break-word}
 /* circles */
 .grp{padding:16px 20px 20px;min-width:0}
 .gh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:8px;flex-wrap:wrap}.gh b{font-size:15px;font-weight:800}
@@ -146,6 +146,7 @@ h2.big{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.
 .btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:99px;padding:11px 20px;font-weight:800;cursor:pointer;text-decoration:none;background:var(--black);color:#fff}
 .btn.ghost{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
 .btn.sm{padding:7px 16px;font-size:13px}
+.banner .acts{display:flex;gap:8px;align-items:center;flex:none}
 .tools{display:flex;gap:10px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--line)}
 .tools input{flex:1;min-width:150px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:99px;padding:9px 16px;font:inherit;-webkit-user-select:text;user-select:text}
 .tools input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
@@ -242,9 +243,8 @@ a{color:var(--accent);font-weight:700}
 
     <section class="tab" id="tab-result">
       <div class="pagehead"><h2 class="big">放榜</h2><div class="picked" id="pickedX"></div></div>
-      <div class="banner" id="banner"><div><h3 id="banH">未放榜</h3><p id="banP"></p></div><div class="acts"><button class="btn sm" id="simBtn" type="button">模擬放榜</button></div></div>
-      <div id="resultGroups"></div>
-      <div class="card"><div class="legend" id="legendX"></div></div>
+      <div class="banner" id="banner"><div><h3 id="banH">未放榜</h3><p id="banP"></p></div><div class="acts"><a class="btn ghost sm" id="pdfBtn" href="#" target="_blank" rel="noopener" hidden>榜單 PDF</a><button class="btn sm" id="simBtn" type="button">模擬放榜</button></div></div>
+      <div class="card"><div class="sh"><h3>榜單</h3></div><div id="resultGroups"></div><div class="legend" id="legendX"></div></div>
     </section>
 
     <section class="tab" id="tab-log">
@@ -353,30 +353,29 @@ function renderResult(){
   $("banH").textContent=simOn?"模擬放榜":rea?"已放榜":"未放榜";
   $("banP").textContent=simOn?"隨機結果，只存在這台裝置":"";
   var btn=$("simBtn");btn.hidden=!(simOn||!rel);btn.textContent=simOn?"清除":"模擬放榜";
-  GROUPS.slice(0,2).forEach(function(g){
-    var key="result:"+g[0],list=pickList(g),card=el("div","card"),s=EO()&&EO().sec&&EO().sec[g[3]],h=el("div","sh");
-    h.appendChild(foldHead(key,g[1],null));
-    h.appendChild(el("span","tg",rea&&s?"正取 "+s.win.length+" · 備取 "+s.wait.length:list.length+" 人"));
-    if(closed[key])h.style.paddingBottom="16px";card.appendChild(h);
+  var pu=O&&O.url||(st&&st.url),pb=$("pdfBtn");if(pu&&!simOn&&/^https?:/.test(pu)){pb.hidden=false;pb.href=pu.replace(/^http:/,"https:")}else pb.hidden=true;
+  GROUPS.slice(0,2).forEach(function(g,gi){
+    var key="result:"+g[0],list=pickList(g),s=EO()&&EO().sec&&EO().sec[g[3]],w=el("div","grp");if(gi)w.style.borderTop="1px solid var(--line)";
+    w.appendChild(foldHead(key,g[1],rea&&s?"正取 "+s.win.length+" · 備取 "+s.wait.length:list.length+" 人"));
     if(!closed[key]){
-      var w=el("div","grp");w.style.paddingTop="12px";
-      if(!rea||!s){var d=el("div","dots");list.forEach(function(p){d.appendChild(circle(p,g))});w.appendChild(d)}
+      var body=el("div");body.style.marginTop="12px";
+      if(!rea||!s){var d=el("div","dots");list.forEach(function(p){d.appendChild(circle(p,g))});body.appendChild(d)}
       else{
         var byId={},seen={};list.forEach(function(p){byId[String(p[g[2]])]=p});
-        var put=function(ids,title){var arr=ids.map(function(i){seen[i]=1;return byId[i]}).filter(Boolean);w.appendChild(sep(title+" "+arr.length));var d=el("div","dots");arr.forEach(function(p){d.appendChild(circle(p,g))});w.appendChild(d)};
+        var put=function(ids,title){var arr=ids.map(function(i){seen[i]=1;return byId[i]}).filter(Boolean);body.appendChild(sep(title+" "+arr.length));var d=el("div","dots");arr.forEach(function(p){d.appendChild(circle(p,g))});body.appendChild(d)};
         put(s.win,"正取");put(s.wait,"備取");
         var rest=list.filter(function(p){return !seen[String(p[g[2]])]});
-        w.appendChild(sep("未列入 "+rest.length));var d2=el("div","dots");rest.forEach(function(p){d2.appendChild(circle(p,g))});w.appendChild(d2);
+        body.appendChild(sep("未列入 "+rest.length));var d2=el("div","dots");rest.forEach(function(p){d2.appendChild(circle(p,g))});body.appendChild(d2);
       }
-      card.appendChild(w)}
-    box.appendChild(card)});
-  var fc=el("div","card"),fh=el("div","sh");fh.appendChild(el("h3",null,"財金"));fc.appendChild(fh);var fb=el("div","grp");
+      w.appendChild(body)}
+    box.appendChild(w)});
+  var f=el("div","grp");f.style.borderTop="1px solid var(--line)";f.appendChild(el("div","fline","財金"));
   GROUPS.slice(2).forEach(function(g){
     var list=pickList(g),s=EO()&&EO().sec&&EO().sec[g[3]],row=el("div","fx");row.appendChild(el("b",null,g[1]));
     if(rea&&s){row.appendChild(el("span","k","正取 "+s.win.length+" · 備取 "+s.wait.length));row.appendChild(el("div","fl","正取　"+s.win.map(lab).join(" ")));row.appendChild(el("div","fl","備取　"+s.wait.map(lab).join(" ")))}
     else row.appendChild(el("span","k",list.length+" 人"));
-    fb.appendChild(row)});
-  fc.appendChild(fb);box.appendChild(fc);
+    f.appendChild(row)});
+  box.appendChild(f);
   legendInto("legendX",rea?[["w","正取"],["t","備取"],["n","未列入"]].concat(RINGS):RINGS);
 }
 function renderCircles(){renderRoster();renderResult()}
@@ -407,10 +406,15 @@ function renderHero(){
 }
 function renderTiles(){
   var b=$("tiles");b.textContent="";
-  var nb=R?R.n.biz:68,ni=R?R.n.io:66,c1=0,c2=0;if(R)R.people.forEach(function(p){var c=cat(p);if(c==="重榜")c1++;if(c==="三重")c2++});
-  [["ta",nb+" / "+ni,"一階人數 商研 / 國企"],["tb",c1+" / "+c2,"重榜 / 三重"],["tc","33 / 33","正取名額 商研 / 國企"]].forEach(function(x){var t=el("div","tile "+x[0]);t.appendChild(el("b",null,x[1]));t.appendChild(el("span",null,x[2]));b.appendChild(t)});
-  var url=O&&O.url||(st&&st.url);var c=el(url?"a":"div","tile cta"+(url?"":" off"));if(url){c.href=url.replace(/^http:/,"https:");c.target="_blank";c.rel="noopener"}
-  c.appendChild(el("b",null,url?"開啟榜單":"等待放榜"));c.appendChild(el("span",null,url?"PDF":"尚未出現"));b.appendChild(c);
+  var rea=valid(),simOn=!!SIM;
+  [["tbiz","商研","biz",ME.b],["tio","國企","io",ME.i]].forEach(function(x){
+    var s=status(x[2],x[3]),t=el("div","tile "+x[0]);
+    t.appendChild(el("b",null,s&&s.t!=="pre"?labelMe(s):"待放榜"));t.appendChild(el("span",null,x[1]));b.appendChild(t)});
+  var w=function(k){var s=EO()&&EO().sec&&EO().sec[CODE[k]];return rea&&s?String(s.wait.length):"—"};
+  var t3=el("div","tile twait");t3.appendChild(el("b",null,w("biz")+" / "+w("io")));t3.appendChild(el("span",null,"備取名額 商研 / 國企"));b.appendChild(t3);
+  var t4=el(rea?"button":"div","tile tgo"+(rea?" on":""));
+  if(rea){t4.type="button";t4.addEventListener("click",function(){go("result")})}
+  t4.appendChild(el("b",null,simOn?"模擬放榜":rea?"已放榜":"等待放榜"));t4.appendChild(el("span",null,rea?"點擊查詢":"尚未出現"));b.appendChild(t4);
 }
 function renderTL(){
   var box=$("tl");box.textContent="";var now=Date.now(),fill=el("div","fill");box.appendChild(fill);var done=0;
