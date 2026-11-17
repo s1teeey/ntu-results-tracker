@@ -7,7 +7,7 @@ txt = open(sys.argv[1], encoding="utf-8").read()
 roster = None if sys.argv[2] == "-" else json.load(open(sys.argv[2], encoding="utf-8"))
 if roster and "people" not in roster and isinstance(roster.get("data"), dict): roster = roster["data"]  # db export wrapper
 out_path = sys.argv[3]; url = sys.argv[4] if len(sys.argv) > 4 else ""; found_at = sys.argv[5] if len(sys.argv) > 5 else ""
-CODES = {"7010": "商研所", "7070": "國企", "7040": "財金甲", "7050": "財金乙", "7060": "財金丙"}
+CODES = {"7010": "商研", "7070": "國企", "7040": "財金甲", "7050": "財金乙", "7060": "財金丙"}
 sec, declared, reasons = {}, {}, []
 for blk in re.split(r"系所組別：", txt)[1:]:
     for code in CODES:
@@ -23,7 +23,7 @@ for code, name in CODES.items():
     if d is None: reasons.append(f"{name}：找不到榜單合計人數，無法核對")
     elif d != got: reasons.append(f"{name}：解析 正取{got[0]}/備取{got[1]}，榜單合計 正取{d[0]}/備取{d[1]}")
 if roster:
-    ids = {"7010": [p["b"] for p in roster["people"] if p.get("b") and not p.get("babs")],
+    ids = {"7010": [p["b"] for p in roster["people"] if p.get("b")],
            "7070": [p["i"] for p in roster["people"] if p.get("i")]}
     for code, lst in ids.items():
         if code in sec:
@@ -36,7 +36,7 @@ json.dump(res, open(out_path, "w", encoding="utf-8"), ensure_ascii=False, separa
 print("VALID" if res["valid"] else "INVALID: " + "; ".join(reasons))
 for code, name in CODES.items():
     if code in sec: print(f"  {name}: 正取{len(sec[code]['win'])} 備取{len(sec[code]['wait'])} (榜單合計 {declared.get(code)})")
-for label, mid, code in (("商研所", "7010069", "7010"), ("國企", "7070076", "7070")):
+for label, mid, code in (("商研", "7010069", "7010"), ("國企", "7070076", "7070")):
     s = sec.get(code)
     if not s: print(f"MINE {label} {mid}: 讀取失敗"); continue
     out = "正取" if mid in s["win"] else (f"備取第{s['wait'].index(mid)+1}順位" if mid in s["wait"] else "未列入榜單")
