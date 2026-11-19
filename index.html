@@ -485,11 +485,13 @@ function renderLog(){
   L.slice().reverse().forEach(function(d){var li=el("li");li.appendChild(el("time",null,fmt(d.ts)));li.appendChild(el("span",null,String(d.msg||"")));ul.appendChild(li)});
 }
 var POLL_MS=10000,nextPoll=Date.now()+POLL_MS,polling=false;
+function finished(){return phase()==="found"&&!!(O&&O.valid)}
 function leftSec(){return Math.max(0,Math.ceil((nextPoll-Date.now())/1000))}
 function chkText(){return polling?"檢查中…":leftSec()+" 秒後重新檢查"}
 function renderLive(){
   var off=!lastOk||Date.now()-lastOk>75000,cls=fetchErr&&off?"live bad":off?"live off":"live",txt=fetchErr&&off?"離線":(polling?"live · …":"live · "+leftSec()+"s");
-  var ck=$("chk");if(ck)ck.textContent=chkText();
+  var fin=finished();if(fin){cls="live off";txt="已完成"}
+  var ck=$("chk");if(ck){ck.hidden=fin;ck.textContent=chkText()}
   ["liveS","liveT"].forEach(function(id){var e=$(id);e.className=cls;e.querySelector(".lt").textContent=txt});
   $("syncS").textContent=lastOk?"同步 "+fmt(new Date(lastOk).toISOString()).slice(6):"尚未同步";
   $("srcInfo").textContent="data/status.json · "+(lastOk?"上次同步 "+fmt(new Date(lastOk).toISOString()):"尚未同步");
@@ -541,8 +543,8 @@ buildNav();buildChips();renderDate();
 var h=(location.hash||"").slice(1);if(h==="history")h="log";if(h==="double")h="roster";
 go(TABS.some(function(t){return t[0]===h})?h:"overview");
 renderAll();loadRoster();pollStatus();
-$("chk").addEventListener("click",function(){if(!polling){nextPoll=0;tick()}});
-function tick(){if(!polling&&Date.now()>=nextPoll)pollStatus();renderHero();renderTL();renderLive();renderDate()}
+$("chk").addEventListener("click",function(){if(!polling&&!finished()){nextPoll=0;tick()}});
+function tick(){if(!polling&&!finished()&&Date.now()>=nextPoll)pollStatus();renderHero();renderTL();renderLive();renderDate()}
 setInterval(tick,1000);
 })();
 </script>
