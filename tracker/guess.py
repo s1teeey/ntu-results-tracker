@@ -16,6 +16,7 @@ ap.add_argument("--repo", required=True); ap.add_argument("--batch", default="2"
 ap.add_argument("--every", type=float, default=5.0); ap.add_argument("--deadline", type=float, default=0)
 ap.add_argument("--dirs", default="LocalAdmissionClass,A02"); ap.add_argument("--max-time", type=int, default=8)
 ap.add_argument("--parallel", type=int, default=10); ap.add_argument("--no-pipeline", action="store_true")
+ap.add_argument("--verbose", action="store_true", help="print every cycle (default: first, then once a minute)")
 ap.add_argument("--include-control", action="store_true", help="also probe the batch-1 file (it exists) to prove detection works")
 a = ap.parse_args()
 Y, N = a.year, a.batch
@@ -79,6 +80,6 @@ while True:
         p = subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "run.py"), "--repo", a.repo,
                             "--batch", N, "--deadline", str(time.time() + 120), "--test-url", hit], capture_output=True, text=True)
         print("PIPELINE output:\n" + p.stdout[-1500:], flush=True); sys.exit(0)
-    if n == 1 or n % 12 == 0:
-        print(f"CYCLE {n} {iso()}Z codes={counts}", flush=True)
+    if a.verbose or n == 1 or n % 12 == 0:
+        print(f"CYCLE {n:>4}  {iso()}Z  {time.time() - t0:4.1f}s  codes={counts}", flush=True)
     time.sleep(max(0.0, a.every - (time.time() - t0)))
