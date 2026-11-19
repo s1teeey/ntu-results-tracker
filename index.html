@@ -77,6 +77,8 @@ h2.big{margin:0;font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-
 .hero h3{margin:6px 0 0;font-size:20px;line-height:1.35;font-weight:700;text-wrap:balance}
 .hero .num{font-family:var(--mono);font-size:38px;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .hero p{margin:0;font-size:14px;opacity:.75}
+.chk{align-self:flex-start;margin-top:8px;border:0;background:rgba(255,255,255,.6);color:inherit;font-family:var(--mono);font-size:13px;padding:6px 12px;border-radius:99px;cursor:pointer}
+.hero.found .chk{background:rgba(255,255,255,.16)}
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .tile{border-radius:20px;padding:14px 16px;min-width:0}
 .tile b{display:block;font-size:22px;line-height:1.25;font-weight:600;letter-spacing:0}
@@ -215,7 +217,7 @@ a{color:var(--accent);font-weight:700}
     <section class="tab" id="tab-overview">
       <div class="date" id="dateLine"></div>
       <h2 class="big">116 甄試放榜</h2>
-      <div class="hero" id="hero" aria-live="polite"><span class="tag" id="heroTag">讀取中</span><h3 id="heroH">正在連線…</h3><div class="num" id="heroN" hidden></div><p id="heroP"></p></div>
+      <div class="hero" id="hero" aria-live="polite"><span class="tag" id="heroTag">讀取中</span><h3 id="heroH">正在連線…</h3><div class="num" id="heroN" hidden></div><p id="heroP"></p><button class="chk" id="chk" type="button">—</button></div>
       <div class="tiles" id="tiles"></div>
       <div class="card"><div class="tl" id="tl"></div></div>
       <div class="card">
@@ -482,8 +484,12 @@ function renderLog(){
   var ul=$("log");ul.textContent="";var L=(st&&st.log)||[];$("logEmpty").hidden=L.length>0;
   L.slice().reverse().forEach(function(d){var li=el("li");li.appendChild(el("time",null,fmt(d.ts)));li.appendChild(el("span",null,String(d.msg||"")));ul.appendChild(li)});
 }
+var POLL_MS=10000,nextPoll=Date.now()+POLL_MS,polling=false;
+function leftSec(){return Math.max(0,Math.ceil((nextPoll-Date.now())/1000))}
+function chkText(){return polling?"檢查中…":leftSec()+" 秒後重新檢查"}
 function renderLive(){
-  var off=!lastOk||Date.now()-lastOk>75000,cls=fetchErr&&off?"live bad":off?"live off":"live",txt=fetchErr&&off?"離線":"live";
+  var off=!lastOk||Date.now()-lastOk>75000,cls=fetchErr&&off?"live bad":off?"live off":"live",txt=fetchErr&&off?"離線":(polling?"live · …":"live · "+leftSec()+"s");
+  var ck=$("chk");if(ck)ck.textContent=chkText();
   ["liveS","liveT"].forEach(function(id){var e=$(id);e.className=cls;e.querySelector(".lt").textContent=txt});
   $("syncS").textContent=lastOk?"同步 "+fmt(new Date(lastOk).toISOString()).slice(6):"尚未同步";
   $("srcInfo").textContent="data/status.json · "+(lastOk?"上次同步 "+fmt(new Date(lastOk).toISOString()):"尚未同步");
@@ -524,7 +530,7 @@ function go(t){tab=t;try{history.replaceState(null,"","#"+t)}catch(e){}
 function renderAll(){renderMine();renderHero();renderTiles();renderTL();renderMe();renderValid();renderCircles();renderPicked();renderHist();renderTable();renderLog();renderLive();renderModal();$("simTag").classList.toggle("on",!!SIM)}
 
 /* ---------- polling ---------- */
-function pollStatus(){getJSON("data/status.json").then(function(j){st=j;lastOk=Date.now();fetchErr=false}).catch(function(){fetchErr=true}).then(function(){renderHero();renderTiles();renderLog();renderLive();renderMine();renderResult();renderModal();if(phase()==="found")pollOutcomes()})}
+function pollStatus(){polling=true;getJSON("data/status.json").then(function(j){st=j;lastOk=Date.now();fetchErr=false}).catch(function(){fetchErr=true}).then(function(){polling=false;nextPoll=Date.now()+POLL_MS;renderHero();renderTiles();renderLog();renderLive();renderMine();renderResult();renderModal();if(phase()==="found")pollOutcomes()})}
 var outBusy=false,outLast=0;
 function pollOutcomes(){var gap=O&&O.valid?120000:15000;if(outBusy||Date.now()-outLast<gap)return;outBusy=true;outLast=Date.now();
   getJSON("data/outcomes.json").then(function(j){O=j;renderAll()}).catch(function(){}).then(function(){outBusy=false})}
@@ -535,8 +541,9 @@ buildNav();buildChips();renderDate();
 var h=(location.hash||"").slice(1);if(h==="history")h="log";if(h==="double")h="roster";
 go(TABS.some(function(t){return t[0]===h})?h:"overview");
 renderAll();loadRoster();pollStatus();
-setInterval(pollStatus,15000);
-setInterval(function(){renderHero();renderTL();renderLive();renderDate()},1000);
+$("chk").addEventListener("click",function(){if(!polling){nextPoll=0;tick()}});
+function tick(){if(!polling&&Date.now()>=nextPoll)pollStatus();renderHero();renderTL();renderLive();renderDate()}
+setInterval(tick,1000);
 })();
 </script>
 </body>
