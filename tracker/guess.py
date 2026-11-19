@@ -12,7 +12,7 @@ stdout: START / CYCLE <n> ... (about once a minute) / HIT <url> / PIPELINE ... /
 import argparse, datetime, os, subprocess, sys, time, urllib.parse
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--repo", required=True); ap.add_argument("--batch", default="2"); ap.add_argument("--year", default="116")
+ap.add_argument("--repo", default="."); ap.add_argument("--batch", default="2"); ap.add_argument("--year", default="116")
 ap.add_argument("--every", type=float, default=5.0); ap.add_argument("--deadline", type=float, default=0)
 ap.add_argument("--dirs", default="LocalAdmissionClass,A02"); ap.add_argument("--max-time", type=int, default=8)
 ap.add_argument("--parallel", type=int, default=10); ap.add_argument("--no-pipeline", action="store_true")
@@ -41,10 +41,14 @@ iso = lambda: datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M:%S")
 def cycle():
     """One HEAD per URL in a single parallel curl call. Returns (hit_url_or_None, counts)."""
     try:
-        out = subprocess.run(["curl", "-sS", "--parallel", "--parallel-max", str(a.parallel)] + sum(
-            [["-I", "-o", "/dev/null", "--max-time", str(a.max_time), "-A", "Mozilla/5.0", "-w", "%{url_effective} %{http_code} %{content_type}\n", u, "--next"] for u in urls], [])[:-1],
-            capture_output=True, text=True, timeout=a.max_time * 3 + 10).stdout
-    except Exception:
+        r = subprocess.run(["curl", "-sS", "--parallel", "--parallel-max", str(a.parallel)] + sum(
+            [["-I", "-o", os.devnull, "--max-time", str(a.max_time), "-A", "Mozilla/5.0", "-w", "%{url_effective} %{http_code} %{content_type}\n", u, "--next"] for u in urls], [])[:-1],
+            capture_output=True, text=True, timeout=a.max_time * 3 + 10)
+        out = r.stdout
+        if r.stderr.strip() and not getattr(cycle, "warned", False):
+            cycle.warned = True; print("CURL: " + r.stderr.strip().splitlines()[0][:200], flush=True)
+    except Exception as e:
+        if not getattr(cycle, "warned", False): cycle.warned = True; print("CURL FAILED: " + str(e)[:200], flush=True)
         return None, {"err": len(urls)}
     counts, hit = {}, None
     for line in out.splitlines():
@@ -63,6 +67,10 @@ def verify_pdf(u):
     except Exception:
         return False
 
+try:
+    print("curl: " + subprocess.run(["curl", "--version"], capture_output=True, text=True).stdout.splitlines()[0], flush=True)
+except Exception:
+    print("ERROR: curl not found (Windows: use curl.exe; it ships with Windows 10/11)"); sys.exit(1)
 print(f"START {iso()}Z probing {len(urls)} urls every {a.every:g}s (dirs={dirs})", flush=True)
 n = 0
 while True:
