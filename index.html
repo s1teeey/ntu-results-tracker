@@ -207,6 +207,8 @@ a{color:var(--accent);font-weight:700}
 .rc.gv::after{content:"";position:absolute;left:6px;right:6px;top:50%;height:2px;background:#e5484d;opacity:.7;transform:rotate(-45deg)}
 .rc.dual{--ring:#6b4eff}.rc.self{outline:3px solid var(--ink);outline-offset:2px}.rc.sel{outline:3px solid var(--accent);outline-offset:2px}
 .rc:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rc.out{opacity:.38;filter:grayscale(1)}
+.legend i.out{background:#e4e5f0;opacity:.45}
 .rline{display:flex;align-items:center;gap:10px;margin:10px 0 4px;font-size:12px;font-weight:800;color:var(--accent)}
 .rline::before,.rline::after{content:"";flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--accent) 0 6px,transparent 6px 10px);opacity:.5}
 .rsum{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -572,10 +574,10 @@ function renderReg(){
       if(minR>0||maxR>0)w.appendChild(el("div","rline",minR>0?"↑ 確定遞補到第 "+minR+" 位":"目前沒有確定遞補的名額"));
       else w.appendChild(el("div","rline","目前不會遞補"));
       if(maxR>minR){w.appendChild(dots(cut(minR,maxR)));w.appendChild(el("div","rline","↑ 最多到第 "+maxR+" 位"))}
-      if(wait.length>Math.max(minR,maxR))w.appendChild(dots(cut(Math.max(minR,maxR))));
+      if(wait.length>Math.max(minR,maxR)){var rest=dots(cut(Math.max(minR,maxR)));Array.prototype.forEach.call(rest.children,function(x){x.classList.add("out");x.title+=" · 依目前資料輪不到"});w.appendChild(rest)}
     }
     box.appendChild(w)});
-  legendInto("legendG",[["v1","志願 1"],["v2","志願 2 以後"],["un","未報到"],["gv","已放棄"],["du","同名也在別所"],["m","我"]]);
+  legendInto("legendG",[["v1","志願 1"],["v2","志願 2 以後"],["un","未報到"],["gv","已放棄"],["du","同名也在別所"],["out","依目前資料輪不到"],["m","我"]]);
   renderRegPicked(byName);
 }
 function regCircle(d,r,linked,byName){
@@ -600,7 +602,7 @@ function buildNav(){
   TABS.forEach(function(t){[n,b].forEach(function(host,idx){var x=el("button",null);x.type="button";x.appendChild(svg(t[2]));x.appendChild(idx===0?document.createTextNode(t[1]):el("span",null,t[1]));if(t[0]===tab)x.setAttribute("aria-current","page");x.addEventListener("click",function(){go(t[0])});host.appendChild(x)})});
 }
 function go(t){tab=t;try{history.replaceState(null,"","#"+t)}catch(e){}
-  TABS.forEach(function(x){$("tab-"+x[0]).classList.toggle("on",x[0]===t);if(x[0]===t)$("pageTitle").textContent=x[1]});buildNav();window.scrollTo(0,0)}
+  $("mine").hidden=t!=="overview";TABS.forEach(function(x){$("tab-"+x[0]).classList.toggle("on",x[0]===t);if(x[0]===t)$("pageTitle").textContent=x[1]});buildNav();window.scrollTo(0,0)}
 function renderAll(){renderMine();renderHero();renderTiles();renderTL();renderMe();renderValid();renderCircles();renderPicked();renderHist();renderTable();renderLog();renderLive();renderModal();$("simTag").classList.toggle("on",!!SIM)}
 
 /* ---------- polling ---------- */
