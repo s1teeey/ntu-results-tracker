@@ -11,7 +11,7 @@ A masked name is treated as one person only if its statuses are consistent (all 
 import collections, datetime, html, json, re, sys, urllib.parse, urllib.request
 
 URL = "https://gra108.aca.ntu.edu.tw/regchk/stu_query.asp"
-DEPTS = [("7010", "商研"), ("7070", "國企"), ("7040", "財金甲"), ("7050", "財金乙"), ("7060", "財金丙")]
+DEPTS = [("7010", "商研"), ("7070", "國企"), ("7040", "財金甲"), ("7050", "財金乙"), ("7060", "財金丙"), ("7030", "會計乙")]
 
 def get(data=None):
     req = urllib.request.Request(URL, data=data, headers={"User-Agent": "Mozilla/5.0"})
