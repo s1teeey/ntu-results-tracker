@@ -75,8 +75,23 @@ def analyse(D):
         new = walk(g_min, reach)
         if new == reach: break
         reach = new
-    g_max = lambda d, r, _: r["st"] in ("已放棄", "未報到") or (r["st"].startswith("志願") and int(r["st"][2:]) > 1)
-    hi = walk(g_max, {})
+    def g_max(d, r, reach):
+        # best case: everyone who might still leave does leave
+        if r["st"] in ("已放棄", "未報到"): return True
+        if not r["st"].startswith("志願") or int(r["st"][2:]) == 1: return False
+        if not link[r["n"]]: return True          # better choice is outside these lists: unknown, may leave
+        k = int(r["st"][2:])
+        for dd, x in P[r["n"]].items():
+            if dd == d or not x["st"].startswith("志願") or int(x["st"][2:]) >= k: continue
+            if x["t"] == "W": return True
+            pos = [y["id"] for y in D[dd] if y["t"] == "B"].index(x["id"]) + 1
+            if pos <= reach[dd]["reach"]: return True
+        return False                              # better choice can no longer be reached: stays here
+    hi = {d: {"reach": sum(1 for r in D[d] if r["t"] == "B")} for d in D}
+    for _ in range(10):
+        new = walk(g_max, hi)
+        if all(new[d]["reach"] == hi[d]["reach"] for d in D): hi = new; break
+        hi = new
     return {d: {"min": reach[d], "max": hi[d]} for d in D}, {n: v for n, v in link.items() if v}
 
 def main():
